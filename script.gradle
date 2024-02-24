@@ -1,0 +1,108 @@
+import java.time.LocalDate
+
+/**
+ * Объявление properties
+ */
+ext {
+    javaVersion = 16
+    currentDate = LocalDate.now()
+}
+
+/**
+ * Разные типы обращений к properties, объявленным в блоке "ext"
+ */
+println ext.javaVersion
+println project.ext.javaVersion
+println project.javaVersion
+println javaVersion
+
+println "----- All properties:"
+println project.properties
+println "----- System properties:"
+println System.getProperty("sys.example")
+
+task first {
+    doLast {
+        println "Task 1"
+    }
+}
+
+task second {
+    doLast {
+        println "Task 2"
+    }
+}
+
+task third {
+    doLast {
+        println "Task 3"
+    }
+}
+
+task fourth(group: "alex") {
+    doLast {
+        println "Task 4"
+    }
+}
+
+// 2 <--- 4
+
+/**
+ * Указывает, что вызов задачи first должен быть
+ * перед вызовом задачи fourth
+ */
+fourth.dependsOn first
+
+/**
+ * Указывает, что вызов задачи second должен быть
+ * перед вызовом задачи second
+ */
+fourth.dependsOn second
+
+/**
+ * Указывает, что вызов задачи third должен быть
+ * после вызова задачи fourth
+ */
+fourth.finalizedBy third
+
+/**
+ * Указывает, что вызов задачи second должен быть после вызова задачи first,
+ * оставляя дерево задач taskGraph неизменным.
+ * <p></p>
+ * Также можно использовать taskName.shouldRunAfter
+ */
+second.mustRunAfter first
+
+
+/**
+ * taskGraph.whenReady позволяет посмотреть графы,
+ * которые входят в task
+ */
+gradle.taskGraph.whenReady { TaskExecutionGraph graph ->
+    println "---- Graph:"
+    graph.allTasks.each {
+        println "${it.name}"
+    }
+}
+
+
+/**
+ * beforeTask & afterTask позволяют выполнять какие-либо действия до и после задачи
+ */
+gradle.taskGraph.beforeTask { task ->
+    if (task.group == 'alex') {
+        println "beforeTask callback $task"
+    }
+}
+
+gradle.taskGraph.afterTask { task ->
+    if (task.name == 'first') {
+        println "afterTask callback $task"
+    }
+}
+
+/**
+ * Тут указываются дефолтные задачи, которые будут вызываться по консольной
+ * команде "gradle". Изначально у gradle по умолчанию стоит task -> help
+ */
+defaultTasks "fourth"
