@@ -55,6 +55,10 @@ sourceSets {
     }
 }
 
+dependencies {
+    implementation "org.springframework:spring-webmvc:5.3.9"
+}
+
 /**
  * В блоке repositories вы можете указать различные типы репозиториев, такие как:
  * <p></p>
