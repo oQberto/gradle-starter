@@ -85,7 +85,17 @@ sourceSets {
  * также использовать зависимости, находящиеся в локальной директории проекта.
  */
 dependencies {
-    implementation "org.springframework:spring-webmvc:5.3.9"
+    /**
+     * Пример того, как происходит исключение каких-либо транзитивных зависимостей
+     */
+    implementation ("org.springframework:spring-webmvc:5.3.9") {
+//        exclude(group: 'org.springframework', module: 'spring-aop') -> отключение одной зависимости
+//        transitive(false) -> отключение всех транзитивных зависимостей
+    }
+
+    implementation("org.springframework:spring-aop:5.3.8") {
+//        force(true) -> говорим Gradle, что мы хотим использовать именно версию 5.3.8 spring-aop
+    }
 }
 
 /**
