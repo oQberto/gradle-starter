@@ -3,6 +3,7 @@
  */
 plugins {
     id 'java'
+    id 'war'
 }
 
 /**
@@ -58,6 +59,11 @@ repositories {
     }
     mavenLocal()
     mavenCentral()
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
 }
 
 /**
@@ -131,6 +137,7 @@ sourceSets {
  * также использовать зависимости, находящиеся в локальной директории проекта.
  */
 dependencies {
+    compileOnly "jakarta.servlet:jakarta.servlet-api:5.0.0"
     /**
      * Пример того, как происходит исключение каких-либо транзитивных зависимостей
      */
@@ -206,6 +213,14 @@ task copyAllDependencies(type: Copy) {
 }
 
 jar.dependsOn copyAllDependencies
+
+task deployTomcat(type: Copy) {
+    from(war.archiveFile.get())
+    into("~/Users/ermak/Downloads/apache-tomcat-10.0.8/webapps")
+}
+
+deployTomcat.dependsOn war
+assemble.dependsOn deployTomcat
 
 /**
  * Plugin - это обычный объект или script (в зависимости от нашего выбора), который
