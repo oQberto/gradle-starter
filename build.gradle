@@ -15,6 +15,52 @@ apply from: 'script.gradle'
 apply plugin: CustomPlugin.class
 
 /**
+ * В блоке repositories вы можете указать различные типы репозиториев, такие как:
+ * <p></p>
+ * mavenCentral(): Это один из стандартных удаленных репозиториев Maven. Он содержит огромное количество библиотек и
+ * зависимостей для Java и других языков.
+ * <p></p>
+ * jcenter(): Еще один стандартный удаленный репозиторий, поддерживаемый Bintray. Он также содержит множество библиотек
+ * для различных языков программирования и платформ.
+ * <p></p>
+ * mavenLocal(): Локальный репозиторий Maven на вашем компьютере. Gradle будет искать зависимости в этом репозитории на
+ * вашем локальном компьютере перед тем, как обратиться к удаленным репозиториям.
+ * <p></p>
+ * flatDir { dirs 'libs' }: Позволяет Gradle искать зависимости в локальной директории libs относительно корня проекта.
+ * <p></p>
+ * Пример использования repositories в Gradle:
+ * <pre>{@code
+ * repositories {
+ *      mavenCentral()
+ *      jcenter()
+ *      mavenLocal()
+ *      flatDir {
+ *          dirs 'libs'
+ *      }
+ * }
+ *}
+ * </pre>
+ * Этот код указывает Gradle использовать стандартные удаленные репозитории Maven (mavenCentral и jcenter), локальный
+ * репозиторий Maven (mavenLocal) и локальную директорию libs, которая находится в корне проекта. Gradle будет искать
+ * зависимости в этих репозиториях при выполнении сборки проекта и загрузке необходимых библиотек.
+ */
+repositories {
+    // ~/.gradle/cashes --offline
+    // ~/.m2/repository
+
+    /**
+     * Установка локального репозитория.
+     * Например, репозиторий компании
+     */
+    maven {
+        name "nexus alex"
+        url "https://nexus.alex/repository"
+    }
+    mavenLocal()
+    mavenCentral()
+}
+
+/**
  * В Gradle sourceSets - это механизм, который позволяет организовывать и настраивать исходные наборы (source sets) в проекте. Исходные наборы представляют собой группы исходных файлов, которые Gradle использует для выполнения различных задач, таких как компиляция, тестирование и создание дистрибутивов.
  * <p></p>
  * Обычно в проекте есть несколько исходных наборов, таких как исходный код основного приложения, тестовый код, ресурсы и тестовые ресурсы. sourceSets позволяет явно определять эти наборы и настраивать их параметры.
@@ -88,13 +134,24 @@ dependencies {
     /**
      * Пример того, как происходит исключение каких-либо транзитивных зависимостей
      */
-    implementation ("org.springframework:spring-webmvc:5.3.9") {
+    implementation("org.springframework:spring-webmvc:5.3.9") {
 //        exclude(group: 'org.springframework', module: 'spring-aop') -> отключение одной зависимости
 //        transitive(false) -> отключение всех транзитивных зависимостей
     }
 
     implementation("org.springframework:spring-aop:5.3.8") {
 //        force(true) -> говорим Gradle, что мы хотим использовать именно версию 5.3.8 spring-aop
+    }
+}
+
+jar {
+    def jars = configurations.runtimeClasspath.files.collect {
+        "lib/$it.name"
+    }
+
+    manifest {
+        attributes 'Main-Class': 'com.alex.HelloWorld',
+                'Class-Path': jars.join(' ')
     }
 }
 
@@ -119,7 +176,7 @@ dependencies {
  *              transitive = true
  *          }
  *      }
- *  }
+ *}
  * </pre>
  * В этом примере мы определяем три различных конфигурации:
  * <p>
@@ -143,51 +200,12 @@ configurations {
     }
 }
 
-/**
- * В блоке repositories вы можете указать различные типы репозиториев, такие как:
- * <p></p>
- * mavenCentral(): Это один из стандартных удаленных репозиториев Maven. Он содержит огромное количество библиотек и
- * зависимостей для Java и других языков.
- * <p></p>
- * jcenter(): Еще один стандартный удаленный репозиторий, поддерживаемый Bintray. Он также содержит множество библиотек
- * для различных языков программирования и платформ.
- * <p></p>
- * mavenLocal(): Локальный репозиторий Maven на вашем компьютере. Gradle будет искать зависимости в этом репозитории на
- * вашем локальном компьютере перед тем, как обратиться к удаленным репозиториям.
- * <p></p>
- * flatDir { dirs 'libs' }: Позволяет Gradle искать зависимости в локальной директории libs относительно корня проекта.
- * <p></p>
- * Пример использования repositories в Gradle:
- * <pre>{@code
- * repositories {
- *      mavenCentral()
- *      jcenter()
- *      mavenLocal()
- *      flatDir {
- *          dirs 'libs'
- *      }
- * }
- *}
- * </pre>
- * Этот код указывает Gradle использовать стандартные удаленные репозитории Maven (mavenCentral и jcenter), локальный
- * репозиторий Maven (mavenLocal) и локальную директорию libs, которая находится в корне проекта. Gradle будет искать
- * зависимости в этих репозиториях при выполнении сборки проекта и загрузке необходимых библиотек.
- */
-repositories {
-    // ~/.gradle/cashes --offline
-    // ~/.m2/repository
-
-    /**
-     * Установка локального репозитория.
-     * Например, репозиторий компании
-     */
-    maven {
-        name "nexus alex"
-        url "https://nexus.alex/repository"
-    }
-    mavenLocal()
-    mavenCentral()
+task copyAllDependencies(type: Copy) {
+    from(configurations.runtimeClasspath.files)
+    into("$buildDir/libs/lib")
 }
+
+jar.dependsOn copyAllDependencies
 
 /**
  * Plugin - это обычный объект или script (в зависимости от нашего выбора), который
